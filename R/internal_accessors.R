@@ -1,14 +1,7 @@
 #' @importFrom SingleCellExperiment int_metadata
-#' @importFrom SummarizedExperiment rowRanges
-#' @importFrom GenomeInfoDb isCircular isCircular<- genome genome<- seqinfo
-#' seqinfo<- seqlengths seqlengths<- seqlevels seqlevels<- seqnames seqnames<-
 #' @importFrom S4Vectors DataFrame mcols mcols<- metadata metadata<-
-#'
-#' @importFrom easy.utils fastIntersect
-#' @importFrom rlang is_character is_function
 #' @importFrom BiocGenerics path updateObject
 #' @importFrom methods as
-#' @importClassesFrom GenomeInfoDb Seqinfo
 #' @importClassesFrom S4Vectors SimpleList
 NULL
 

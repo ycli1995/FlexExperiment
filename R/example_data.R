@@ -1,8 +1,14 @@
-#' @importFrom magrittr %>%
 #' @importFrom SingleCellExperiment LinearEmbeddingMatrix SingleCellExperiment
+#' @importFrom SummarizedExperiment SummarizedExperiment
 #'
 #' @importClassesFrom SingleCellExperiment LinearEmbeddingMatrix
 NULL
+
+#' A small example version of the PBMC dataset
+"pbmc_examples"
+
+#' A small example version of the PBMC ATAC dataset
+"atac_examples"
 
 #' Load the example datasets
 #'
@@ -23,13 +29,15 @@ exampleFE <- function(sample = NULL, type = c("RNA", "ATAC")) {
   sample <- sample %||% .all_examples[1]
   sample <- match.arg(sample, .all_examples)
   if (type == "RNA") {
-    data("pbmc_examples", envir = environment())
-    obj <- .load_example_RNA(pbmc_examples[[sample]], to = "FE")
-    return(obj)
+    return(.load_example_RNA(
+      get(data("pbmc_examples", envir = environment()))[[sample]],
+      to = "FE"
+    ))
   }
-  data("atac_examples", envir = environment())
-  obj <- .load_example_RNA(atac_examples[[sample]], to = "FE")
-  return(obj)
+  .load_example_ATAC(
+    get(data("atac_examples", envir = environment()))[[sample]],
+    to = "FE"
+  )
 }
 
 #' @rdname load-examples
@@ -39,13 +47,33 @@ exampleSCFE <- function(sample = NULL, type = c("RNA", "ATAC")) {
   sample <- sample %||% .all_examples[1]
   sample <- match.arg(sample, .all_examples)
   if (type == "RNA") {
-    data("pbmc_examples", envir = environment())
-    obj <- .load_example_RNA(pbmc_examples[[sample]], to = "SCFE")
-    return(obj)
+    return(.load_example_RNA(
+      get(data("pbmc_examples", envir = environment()))[[sample]],
+      to = "SCFE"
+    ))
   }
-  data("atac_examples", envir = environment())
-  obj <- .load_example_RNA(atac_examples[[sample]], to = "SCFE")
-  return(obj)
+  .load_example_ATAC(
+    get(data("atac_examples", envir = environment()))[[sample]],
+    to = "SCFE"
+  )
+}
+
+#' @rdname load-examples
+#' @export
+exampleSE <- function(sample = NULL, type = c("RNA", "ATAC")) {
+  type <- match.arg(type)
+  sample <- sample %||% .all_examples[1]
+  sample <- match.arg(sample, .all_examples)
+  if (type == "RNA") {
+    return(.load_example_RNA(
+      get(data("pbmc_examples", envir = environment()))[[sample]],
+      to = "SE"
+    ))
+  }
+  .load_example_ATAC(
+    get(data("atac_examples", envir = environment()))[[sample]],
+    to = "SE"
+  )
 }
 
 #' @rdname load-examples
@@ -55,13 +83,15 @@ exampleSCE <- function(sample = NULL, type = c("RNA", "ATAC")) {
   sample <- sample %||% .all_examples[1]
   sample <- match.arg(sample, .all_examples)
   if (type == "RNA") {
-    data("pbmc_examples", envir = environment())
-    obj <- .load_example_RNA(pbmc_examples[[sample]], to = "SCE")
-    return(obj)
+    return(.load_example_RNA(
+      get(data("pbmc_examples", envir = environment()))[[sample]],
+      to = "SCE"
+    ))
   }
-  data("atac_examples", envir = environment())
-  obj <- .load_example_RNA(atac_examples[[sample]], to = "SCE")
-  return(obj)
+  .load_example_ATAC(
+    get(data("atac_examples", envir = environment()))[[sample]],
+    to = "SCE"
+  )
 }
 
 
@@ -70,13 +100,15 @@ load_example <- function(sample = NULL, type = c("RNA", "ATAC")) {
   sample <- sample %||% .all_examples[1]
   sample <- match.arg(sample, .all_examples)
   if (type == "RNA") {
-    data("pbmc_examples", envir = environment())
-    obj <- .load_example_RNA(pbmc_examples[[sample]], to = "SCFE")
-    return(obj)
+    return(.load_example_RNA(
+      get("pbmc_examples", envir = environment()),
+      to = "SCFE"
+    ))
   }
-  data("atac_examples", envir = environment())
-  obj <- .load_example_RNA(atac_examples[[sample]], to = "SCFE")
-  return(obj)
+  .load_example_ATAC(
+    get("atac_examples", envir = environment()),
+    to = "SCFE"
+  )
 }
 
 #' @rdname load-examples
@@ -86,13 +118,15 @@ load_example_SCE <- function(sample = NULL, type = c("RNA", "ATAC")) {
   sample <- sample %||% .all_examples[1]
   sample <- match.arg(sample, .all_examples)
   if (type == "RNA") {
-    data("pbmc_examples", envir = environment())
-    obj <- .load_example_RNA(pbmc_examples[[sample]], to = "SCE")
-    return(obj)
+    return(.load_example_RNA(
+      get("pbmc_examples", envir = environment()),
+      to = "SCE"
+    ))
   }
-  data("atac_examples", envir = environment())
-  obj <- .load_example_RNA(atac_examples[[sample]], to = "SCE")
-  return(obj)
+  .load_example_ATAC(
+    get("atac_examples", envir = environment()),
+    to = "SCE"
+  )
 }
 
 .all_examples <- c(
@@ -104,8 +138,8 @@ load_example_SCE <- function(sample = NULL, type = c("RNA", "ATAC")) {
 
 .load_LEM <- function(input) {
   lem <- LinearEmbeddingMatrix(
-    sampleFactors = input$embeddings,
-    featureLoadings = input$loadings,
+    sampleFactors = unname(input$embeddings),
+    featureLoadings = unname(input$loadings),
     factorData = DataFrame(
       stdev = input$stdev,
       row.names = colnames(input$embeddings)
@@ -115,105 +149,108 @@ load_example_SCE <- function(sample = NULL, type = c("RNA", "ATAC")) {
   lem
 }
 
-.load_example_RNA <- function(example_data, to = c("SCFE", "FE", "SCE")) {
+.load_example_RNA <- function(
+    example_data,
+    to = c("SCFE", "FE", "SCE", "SE")
+) {
   to <- match.arg(to)
 
   pca <- .load_LEM(example_data$pca)
   tsne <- example_data$tsne
   umap <- example_data$umap
+  assays <- list(
+    counts = example_data$counts,
+    logcounts = example_data$logcounts,
+    scale.data = example_data$scale.data
+  )
   if (to == "FE") {
-    obj <- FlexExperiment(
-      assays = list(
-        counts = example_data$counts,
-        logcounts = example_data$logcounts,
-        scale.data = example_data$scale.data
-      ),
+    return(FlexExperiment(
+      assays = assays,
       rowData = example_data$rowData,
       colData = example_data$colData
-    )
-    return(obj)
+    ))
+  }
+  if (to == "SE") {
+    return(SummarizedExperiment(
+      assays = assays[c("counts", "logcounts")],
+      rowData = DataFrame(example_data$rowData),
+      colData = DataFrame(example_data$colData)
+    ))
   }
 
   knn <- nnToPairedHits(example_data$knn$idx, example_data$knn$dist)
   snn <- matToPairedHits(example_data$snn)
   if (to == "SCFE") {
-    obj <- SingleCellFlexExperiment(
-      assays = list(
-        counts = example_data$counts,
-        logcounts = example_data$logcounts,
-        scale.data = example_data$scale.data
-      ),
+    return(SingleCellFlexExperiment(
+      assays = assays,
       rowData = example_data$rowData,
       colData = example_data$colData,
       reducedDims = list(PCA = pca, TSNE = tsne, UMAP = umap),
       colPairs = list(KNN = knn, SNN = example_data$snn)
-    )
-    return(obj)
+    ))
   }
   knn <- as(knn, "SelfHits")
   snn <- as(snn, "SelfHits")
-  obj <- SingleCellExperiment(
-    assays = list(
-      counts = example_data$counts,
-      logcounts = example_data$logcounts
-    ),
+  SingleCellExperiment(
+    assays = assays[c("counts", "logcounts")],
     rowData = DataFrame(example_data$rowData),
     colData = DataFrame(example_data$colData),
     reducedDims = list(PCA = pca, TSNE = tsne, UMAP = umap),
     colPairs = list(kNN = knn, SNN = snn)
   )
-  obj
 }
 
-.load_example_ATAC <- function(example_data, to = c("SCFE", "FE", "SCE")) {
+.load_example_ATAC <- function(
+    example_data,
+    to = c("SCFE", "FE", "SCE", "SE")
+) {
   to <- match.arg(to)
 
   lsi <- .load_LEM(example_data$lsi)
-  tsne <- example$tsne
+  tsne <- example_data$tsne
   umap <- example_data$umap
+  assays <- list(
+    counts = example_data$counts,
+    logcounts = example_data$logcounts,
+    scale.data = example_data$scale.data
+  )
   if (to == "FE") {
-    obj <- FlexExperiment(
-      assays = list(
-        counts = example_data$counts,
-        logcounts = example_data$logcounts,
-        scale.data = example_data$scale.data
-      ),
+    return(FlexExperiment(
+      assays = assays,
       rowRanges = example_data$rowRanges,
       rowData = example_data$rowData,
       colData = example_data$colData
+    ))
+  }
+  if (to == "SE") {
+    obj <- SummarizedExperiment(
+      assays = assays[c("counts", "logcounts")],
+      rowRanges = example_data$rowRanges,
+      colData = example_data$colData
     )
+    rowData(obj) <- DataFrame(example_data$rowData)
     return(obj)
   }
-
-
 
   knn <- nnToPairedHits(example_data$knn$idx, example_data$knn$dist)
   snn <- matToPairedHits(example_data$snn)
   if (to == "SCFE") {
-    obj <- SingleCellFlexExperiment(
-      assays = list(
-        counts = example_data$counts,
-        logcounts = example_data$logcounts,
-        scale.data = example_data$scale.data
-      ),
+    return(SingleCellFlexExperiment(
+      assays = assays,
       rowRanges = example_data$rowRanges,
       rowData = example_data$rowData,
       colData = example_data$colData,
       reducedDims = list(LSI = lsi, TSNE = tsne, UMAP = umap),
       colPairs = list(KNN = knn, SNN = example_data$snn)
-    )
-    return(obj)
+    ))
   }
   knn <- as(knn, "SelfHits")
   snn <- as(snn, "SelfHits")
   obj <- SingleCellExperiment(
-    assays = list(
-      counts = example_data$counts,
-      logcounts = example_data$logcounts
-    ),
+    assays = assays[c("counts", "logcounts")],
     rowRanges = example_data$rowRanges,
     colData = DataFrame(example_data$colData),
-    reducedDims = list(PCA = pca, TSNE = tsne, UMAP = umap),
+    reducedDims = list(LSI = lsi, TSNE = tsne, UMAP = umap),
     colPairs = list(kNN = knn, SNN = snn)
   )
   rowData(obj) <- DataFrame(example_data$rowData)

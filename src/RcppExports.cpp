@@ -11,15 +11,27 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// col_merge_dgCMatrices_rcpp
-Eigen::SparseMatrix<double> col_merge_dgCMatrices_rcpp(List mat_list, List mat_colnames, std::vector<std::string> all_colnames);
-RcppExport SEXP _FlexExperiment_col_merge_dgCMatrices_rcpp(SEXP mat_listSEXP, SEXP mat_colnamesSEXP, SEXP all_colnamesSEXP) {
+// col_merge_dgcmatrix_cpp
+Eigen::SparseMatrix<double> col_merge_dgcmatrix_cpp(std::vector<Eigen::SparseMatrix<double>> mat_list, std::vector<std::vector<std::string>> mat_rownames, std::vector<std::string> all_rownames);
+RcppExport SEXP _FlexExperiment_col_merge_dgcmatrix_cpp(SEXP mat_listSEXP, SEXP mat_rownamesSEXP, SEXP all_rownamesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
-    Rcpp::traits::input_parameter< List >::type mat_list(mat_listSEXP);
-    Rcpp::traits::input_parameter< List >::type mat_colnames(mat_colnamesSEXP);
+    Rcpp::traits::input_parameter< std::vector<Eigen::SparseMatrix<double>> >::type mat_list(mat_listSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::vector<std::string>> >::type mat_rownames(mat_rownamesSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::string> >::type all_rownames(all_rownamesSEXP);
+    rcpp_result_gen = Rcpp::wrap(col_merge_dgcmatrix_cpp(mat_list, mat_rownames, all_rownames));
+    return rcpp_result_gen;
+END_RCPP
+}
+// row_merge_dgcmatrix_cpp
+Eigen::SparseMatrix<double> row_merge_dgcmatrix_cpp(std::vector<Eigen::SparseMatrix<double>> mat_list, std::vector<std::vector<std::string>> mat_colnames, std::vector<std::string> all_colnames);
+RcppExport SEXP _FlexExperiment_row_merge_dgcmatrix_cpp(SEXP mat_listSEXP, SEXP mat_colnamesSEXP, SEXP all_colnamesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<Eigen::SparseMatrix<double>> >::type mat_list(mat_listSEXP);
+    Rcpp::traits::input_parameter< std::vector<std::vector<std::string>> >::type mat_colnames(mat_colnamesSEXP);
     Rcpp::traits::input_parameter< std::vector<std::string> >::type all_colnames(all_colnamesSEXP);
-    rcpp_result_gen = Rcpp::wrap(col_merge_dgCMatrices_rcpp(mat_list, mat_colnames, all_colnames));
+    rcpp_result_gen = Rcpp::wrap(row_merge_dgcmatrix_cpp(mat_list, mat_colnames, all_colnames));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -48,7 +60,8 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_FlexExperiment_col_merge_dgCMatrices_rcpp", (DL_FUNC) &_FlexExperiment_col_merge_dgCMatrices_rcpp, 3},
+    {"_FlexExperiment_col_merge_dgcmatrix_cpp", (DL_FUNC) &_FlexExperiment_col_merge_dgcmatrix_cpp, 3},
+    {"_FlexExperiment_row_merge_dgcmatrix_cpp", (DL_FUNC) &_FlexExperiment_row_merge_dgcmatrix_cpp, 3},
     {"_FlexExperiment_rcpp_knn_to_sparse_weights", (DL_FUNC) &_FlexExperiment_rcpp_knn_to_sparse_weights, 3},
     {"_FlexExperiment_rcpp_knn_to_sparse_idx", (DL_FUNC) &_FlexExperiment_rcpp_knn_to_sparse_idx, 2},
     {NULL, NULL, 0}

@@ -11,6 +11,8 @@
 #' metadata<- new2 setValidity2
 #' @importFrom IRanges PartitioningByEnd relist
 #' @importFrom BiocGenerics colnames<- rownames<- updateObject
+#' @importFrom methods slot<-
+#' @importFrom utils .DollarNames
 #'
 #' @importClassesFrom GenomicRanges GenomicRanges_OR_GRangesList
 #' @importClassesFrom S4Vectors Annotated DataFrame DFrame
@@ -92,7 +94,7 @@ FlexExperiment <- function(
       rowData <- as(rowData, "DataFrame")
     }
   } else {
-    rowData <- new2("DFrame", nrows = 0, check = FALSE)
+    rowData <- new2("DFrame", nrows = 0L, check = FALSE)
   }
   if (nrow(rowData) > 0) {
     stopifnot(length(rownames(rowData)) > 0)
@@ -451,8 +453,8 @@ setMethod(
   tryCatch(
     expr = getOneAssay(x@assays, i, withDimnames = withDimnames),
     error = function(err) {
-      e <- "'assay(<%s>, i = <%s>, ...)' failed. Invalid subscript 'i': %i\n"
-      stop(sprintf(e, class(x)[1], type(i)[1], i), conditionMessage(err))
+      e <- "'assay(<%s>, i = <%s>, ...)' failed. Invalid subscript 'i': %s\n"
+      stop(sprintf(e, class(x)[1], mode(i)[1], i), conditionMessage(err))
     }
   )
 }

@@ -13,18 +13,33 @@ Collate:
     'utils.R'
     'FlexExperiment-class.R'
     'NN_manipulation.R'
+    'NearestNeighbors-class.R'
     'PairedHits-class.R'
     'RcppExports.R'
     'internal_accessors.R'
     'SingleCellFlexExperiment-class.R'
+    'coerce.R'
+    'concat.R'
     'example_data.R'
     'roxygen2-doc.R'
     'zzz.R'
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
+Depends: 
+    FlexAssays,
+    Matrix,
+    methods,
+    R (>= 4.4.0),
+    S4Vectors
 LinkingTo: 
     Rcpp,
     RcppEigen
 Imports: 
-    Rcpp
+    BiocGenerics,
+    GenomicRanges,
+    IRanges,
+    Rcpp,
+    rlang,
+    SingleCellExperiment,
+    SummarizedExperiment

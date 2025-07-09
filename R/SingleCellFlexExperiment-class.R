@@ -4,9 +4,8 @@
 #'
 #' @importFrom SingleCellExperiment counts counts<- cpm cpm<- logcounts
 #' logcounts<- normcounts normcounts<- tpm tpm<-
-#' @importFrom IRanges relist PartitioningByEnd
 #' @importFrom S4Vectors make_zero_col_DFrame setValidity2
-#' @importFrom methods setClass
+#' @importFrom methods new setClass
 NULL
 
 #' @importFrom SingleCellExperiment reducedDim reducedDim<- reducedDimNames
@@ -150,13 +149,18 @@ validSCFEIntData <- function(x, getfun, dimfun, keys, immediate. = TRUE) {
   invisible(err)
 }
 
-setValidity2("SingleCellFlexExperiment", function(x) {
+validSCFE <- function(x, immediate. = TRUE) {
   invisible(c(
-    validFE(x, immediate. = FALSE),
-    validSCFEIntData(x, int_colData, ncol, c(.red_key, .colp_key), FALSE),
-    validSCFEIntData(x, int_elementMetadata, nrow, .rowp_key, FALSE)
+    validFE(x, immediate. = immediate.),
+    validSCFEIntData(x, int_colData, ncol, c(.red_key, .colp_key), immediate.),
+    validSCFEIntData(x, int_elementMetadata, nrow, .rowp_key, immediate.)
   ))
-})
+}
+
+setValidity2(
+  "SingleCellFlexExperiment",
+  function(x) validSCFE(x, immediate. = FALSE)
+)
 
 #' @export
 setMethod(
@@ -1091,6 +1095,14 @@ SET_ASSAY <- function(exprs_values, ...) {
   }
 }
 
+#' Named assay getters and setters
+#'
+#' These are convenient methods for getting or setting `assay(x, i = X, ...)`
+#' where `x` is a \code{\link{SingleCellFlexExperiment}} object.
+#'
+#' @name SingleCellFlexExperiment-assays
+NULL
+
 #' @export
 #' @rdname SingleCellFlexExperiment-assays
 setMethod("counts", "SingleCellFlexExperiment", GET_ASSAY("counts"))
@@ -1130,6 +1142,3 @@ setMethod("tpm", "SingleCellFlexExperiment", GET_ASSAY("tpm"))
 #' @export
 #' @rdname SingleCellFlexExperiment-assays
 setMethod("tpm<-", "SingleCellFlexExperiment", SET_ASSAY("tpm"))
-
-
-

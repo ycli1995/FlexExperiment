@@ -3,7 +3,7 @@ add_rowPair <- function(sce) {
   cor1 <- Matrix::rsparsematrix(nrow(sce), nrow(sce), density = 0.3)
   cor2 <- Matrix::rsparsematrix(nrow(sce), nrow(sce), density = 0.3)
   colnames(cor1) <- colnames(cor2) <- rownames(sce)
-  rownames(cor1) <- colnames(cor2) <- rownames(sce)
+  rownames(cor1) <- rownames(cor2) <- rownames(sce)
   rowPair(sce, "cor1") <- cor1
   rowPair(sce, "cor2") <- cor2
   sce
@@ -651,7 +651,7 @@ test_that("rowPairNames<-", {
   expect_error(rowPairNames(sce) <- NULL)
 })
 
-test_that("'SingleCellFlexExperiment' subset", {
+test_that("SingleCellFlexExperiment subset", {
   pbmc <- exampleSCFE()
 
   # integer indices

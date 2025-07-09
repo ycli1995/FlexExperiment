@@ -36,7 +36,7 @@ getValidCharBound <- function(query, ref, return = TRUE, err = "") {
   if (return) {
     return(idx)
   }
-  return(invisible(NULL))
+  invisible(NULL)
 }
 
 #' Check Identical Objects with Custom Error Handling
@@ -97,3 +97,88 @@ checkEqual <- function(x, y, err = "", immediate. = TRUE) {
   }
   getErrors(err, immediate. = immediate.)
 }
+
+#' @export
+checkInherits <- function(obj.list, class, err = NULL, immediate. = TRUE, ...) {
+  chk <- vapply(obj.list, inherits, what = class, FUN.VALUE = logical(1L))
+  if (all(chk)) {
+    return(invisible(NULL))
+  }
+  err <- err %||% sprintf("All objects must inherit from '%s'.", class)
+  getErrors(err, immediate. = immediate.)
+}
+
+verboseMsg <- function (..., verbose = NULL) {
+  verbose <- verbose %||% parent.frame()$verbose %||% TRUE
+  if (isTRUE(verbose)) {
+    message(...)
+  }
+  invisible(NULL)
+}
+
+
+searchCommonNames <- function(
+    obj.list,
+    names.func,
+    names = NULL,
+    verbose = TRUE
+) {
+  func.str <- as.character(substitute(names.func))
+  if (isFALSE(names)) {
+    verboseMsg("Skip searching common '", func.str, "'")
+    return(NULL)
+  }
+  verboseMsg("Search common '", func.str, "' ", paste(names, collapse = ", "))
+  common.names <- Reduce(intersect, lapply(obj.list, names.func))
+  if (is.null(names)) {
+    names <- common.names
+  } else {
+    names <- intersect(names, common.names)
+  }
+  if (length(names) == 0) {
+    warning(
+      "No common '", func.str, "' was found.",
+      call. = FALSE, immediate. = TRUE
+    )
+    return(NULL)
+  }
+  verboseMsg("Found common '", func.str, "': ", paste(names, collapse = ", "))
+  return(names)
+}
+
+dedupNames <- function(
+    obj.list,
+    getfunc,
+    setfunc,
+    collapse = "_",
+    stop = FALSE
+) {
+  stopifnot(is.function(getfunc))
+  stopifnot(is.function(setfunc))
+  all.names <- unlist(lapply(obj.list, getfunc))
+  if (!any(duplicated(all.names))) {
+    return(obj.list)
+  }
+  funstr <- as.character(substitute(getfunc))
+  if (stop) {
+    stop(
+      "Duplicated `", funstr, "` present across ",
+      class(obj.list[[1]])[1], " objects provided."
+    )
+  }
+  warning(
+    "Some `", funstr, "` are duplicated across ", class(obj.list[[1]])[1],
+    " objects provided. Adding suffixes to enforce unique.",
+    call. = FALSE, immediate. = TRUE
+  )
+  for (i in seq_along(obj.list)) {
+    obj.list[[i]] <- setfunc(
+      obj.list[[i]],
+      value = paste0(getfunc(obj.list[[i]]), collapse, i)
+    )
+  }
+  obj.list
+}
+
+
+

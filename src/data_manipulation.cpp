@@ -10,57 +10,90 @@ using namespace Rcpp;
 // [[Rcpp::depends(RcppEigen)]]
 
 // [[Rcpp::export(rng = false)]]
-Eigen::SparseMatrix<double> col_merge_dgCMatrices_rcpp(
-    List mat_list,
-    List mat_colnames,
-    std::vector<std::string> all_colnames
+Eigen::SparseMatrix<double> col_merge_dgcmatrix_cpp(
+    std::vector<Eigen::SparseMatrix<double>> mat_list,
+    std::vector<std::vector<std::string>> mat_rownames,
+    std::vector<std::string> all_rownames
 ) {
-  // Convert Rcpp lists to c++ vectors
-  std::vector<Eigen::SparseMatrix<double, Eigen::ColMajor>> mat_vec;
-  mat_vec.reserve(mat_list.size());
-
-  std::vector<std::vector<std::string>> rownames_vec;
-  rownames_vec.reserve(mat_colnames.size());
-
-  std::vector<std::unordered_map<std::string, int>> map_vec;
-  map_vec.reserve(mat_list.size());
-
-  int num_rows = 0;
-  int num_nZero = 0;
-  // offsets keep track of which row to add in to
-  std::vector<int> offsets;
-
-  for (size_t i = 0; i < mat_list.size(); i++) {
-    mat_vec.emplace_back(
-      Rcpp::as<Eigen::SparseMatrix<double, Eigen::ColMajor>>(mat_list.at(i))
-    );
-    rownames_vec.emplace_back(mat_colnames[i]);
-    // Set up hash maps for rowname based lookup
-    std::unordered_map<std::string, int> mat_map;
-    for (size_t j = 0; j < rownames_vec[i].size(); j++) {
-      mat_map[rownames_vec[i][j]] = j;
-    }
-    map_vec.emplace_back(mat_map);
-    offsets.push_back(num_rows);
-    num_rows += mat_vec[i].rows();
-    num_nZero += mat_vec[i].nonZeros();
+  // row names map
+  std::unordered_map<std::string, int> name_map;
+  for (int i = 0; i < all_rownames.size(); i++) {
+    name_map[all_rownames[i]] = i;
   }
-  // set up tripletList for new matrix creation
-  std::vector<Eigen::Triplet<double>> tripletList;
-  int num_cols = all_colnames.size();
-  tripletList.reserve(num_nZero);
-  // loop over all rows and add nonzero entries to tripletList
-  for(int i = 0; i < num_cols; i++) {
-    std::string key = all_colnames[i];
-    for(int j = 0; j < mat_vec.size(); j++) {
-      if (map_vec[j].count(key)) {
-        for(Eigen::SparseMatrix<double, Eigen::ColMajor>::InnerIterator it1(mat_vec[j], map_vec[j][key]); it1; ++it1){
-          tripletList.emplace_back(it1.row() + offsets[j], i, it1.value());
-        }
+  // row indices map for each matrix
+  std::vector<std::vector<int>> mat_map;
+  mat_map.reserve(mat_rownames.size());
+  std::vector<int> offsets(mat_list.size(), 0);
+  int num_cols = 0;
+  int num_nZero = 0;
+  for (int i = 0; i < mat_rownames.size(); i++) {
+    std::vector<int> map(mat_rownames[i].size(), 0);
+    for (int j = 0; j < mat_rownames[i].size(); j++) {
+      map[j] = name_map[mat_rownames[i][j]];
+    }
+    mat_map.emplace_back(map);
+    offsets[i] = num_cols;
+    num_cols += mat_list[i].cols();
+    num_nZero += mat_list[i].nonZeros();
+  }
+
+  int num_rows = all_rownames.size();
+  Eigen::SparseMatrix<double> combined_mat(num_rows, num_cols);
+  combined_mat.reserve(num_nZero);
+  for (int i = 0; i < mat_list.size(); ++i) {
+    for (int col = 0; col < mat_list[i].cols(); ++col) {
+      for (Eigen::SparseMatrix<double>::InnerIterator it(mat_list[i], col); it; ++it) {
+        combined_mat.insert(mat_map[i][it.index()], col + offsets[i]) = it.value();
       }
     }
   }
+  combined_mat.makeCompressed();
+  return combined_mat;
+}
+
+// [[Rcpp::export(rng = false)]]
+Eigen::SparseMatrix<double> row_merge_dgcmatrix_cpp(
+    std::vector<Eigen::SparseMatrix<double>> mat_list,
+    std::vector<std::vector<std::string>> mat_colnames,
+    std::vector<std::string> all_colnames
+) {
+  // column names map
+  std::unordered_map<std::string, int> name_map;
+  for (int i = 0; i < all_colnames.size(); i++) {
+    name_map[all_colnames[i]] = i;
+  }
+  // column indices map for each matrix
+  std::vector<Eigen::SparseVector<int>> mat_map;
+  mat_map.reserve(mat_colnames.size());
+  std::vector<int> offsets(mat_list.size(), 0);
+  int num_rows = 0;
+  int num_nZero = 0;
+  for (int i = 0; i < mat_colnames.size(); i++) {
+    Eigen::SparseVector<int> map(all_colnames.size());
+    for (int j = 0; j < mat_colnames[i].size(); j++) {
+      std::string key = mat_colnames[i][j];
+      if (name_map.count(key)) {
+        map.insert(name_map[key], 0) = j + 1;
+      }
+    }
+    mat_map.emplace_back(map);
+    offsets[i] = num_rows;
+    num_rows += mat_list[i].rows();
+    num_nZero += mat_list[i].nonZeros();
+  }
+
+  int num_cols = all_colnames.size();
   Eigen::SparseMatrix<double> combined_mat(num_rows, num_cols);
-  combined_mat.setFromTriplets(tripletList.begin(), tripletList.end());
+  combined_mat.reserve(num_nZero);
+  for (int col = 0; col < num_cols; ++col) {
+    for (int i = 0; i < mat_list.size(); ++i) {
+      int c = mat_map[i].coeff(col, 0);
+      if (c == 0) continue;
+      for (Eigen::SparseMatrix<double>::InnerIterator it(mat_list[i], c - 1); it; ++it) {
+        combined_mat.insert(it.index() + offsets[i], col) = it.value();
+      }
+    }
+  }
+  combined_mat.makeCompressed();
   return combined_mat;
 }

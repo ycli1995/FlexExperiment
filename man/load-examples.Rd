@@ -4,6 +4,7 @@
 \alias{load-examples}
 \alias{exampleFE}
 \alias{exampleSCFE}
+\alias{exampleSE}
 \alias{exampleSCE}
 \alias{load_example_SCE}
 \title{Load the example datasets}
@@ -11,6 +12,8 @@
 exampleFE(sample = NULL, type = c("RNA", "ATAC"))
 
 exampleSCFE(sample = NULL, type = c("RNA", "ATAC"))
+
+exampleSE(sample = NULL, type = c("RNA", "ATAC"))
 
 exampleSCE(sample = NULL, type = c("RNA", "ATAC"))
 

@@ -5,7 +5,7 @@
 \alias{FlexExperiment-subset}
 \alias{[,FlexExperiment,ANY,ANY,ANY-method}
 \alias{[[,FlexExperiment,ANY,ANY-method}
-\alias{[[<-,FlexExperiment,ANY,ANY,ANY-method}
+\alias{[[<-,FlexExperiment,ANY,ANY-method}
 \alias{.DollarNames.FlexExperiment}
 \alias{$.FlexExperiment}
 \alias{$<-.FlexExperiment}
@@ -16,7 +16,7 @@
 
 \S4method{[[}{FlexExperiment,ANY,ANY}(x, i, j, ...)
 
-\S4method{[[}{FlexExperiment,ANY,ANY,ANY}(x, i, j, ...) <- value
+\S4method{[[}{FlexExperiment,ANY,ANY}(x, i, j, ...) <- value
 
 \method{.DollarNames}{FlexExperiment}(x, pattern = "")
 
